@@ -78,7 +78,7 @@ function mdir(path) {
 
 function execute(command) {
     return new Promise(function (resolve, reject) {
-        var pro = exec(command, function (error, stdout, stderr) {
+        var pro = process.exec(command, function (error, stdout, stderr) {
             resolve({
                 error,
                 stdout,
