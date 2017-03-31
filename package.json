@@ -1,0 +1,27 @@
+{
+  "name": "angular_bsem",
+  "version": "0.0.1",
+  "description": "BSEM for Radix enabling support for AngularJS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radixjs/angular_bsem.git"
+  },
+  "keywords": [
+    "BSEM",
+    "radix",
+    "angular"
+  ],
+  "author": "Cortney Knorr (Thrivaldi)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/radixjs/angular_bsem/issues"
+  },
+  "homepage": "https://github.com/radixjs/angular_bsem#readme",
+  "dependencies": {
+    "mongoose": "^4.9.2"
+  }
+}
