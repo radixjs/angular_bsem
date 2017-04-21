@@ -1,7 +1,6 @@
 console.log("AngularJS BSEM Added");
 
-const
-    path = require("path"),
+const path = require("path"),
     fs = require("fs")
 ;
 
@@ -31,9 +30,9 @@ exports.lex = {
     generate: {
         length: 1,
         handler: (mod, arg) => {
-            switch(arg){
+            switch (arg) {
                 case "service":
-                    if(mod.settings.source){
+                    if (mod.settings.source) {
                         generateService(mod);
                     } else {
                         console.log("No source specified");
@@ -116,8 +115,8 @@ function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function generateScopeService(mod){
-    writeToFile(path.join(process.cwd(), "sources/assets/javascript/rScope.gen.service.js"), `class RadixScope {
+function generateScopeService(mod) {
+    writeToFile(path.join(process.cwd(), "front/javascript/rScope.gen.service.js"), `class RadixScope {
 
     constructor() {
 
@@ -136,8 +135,8 @@ function generateScopeService(mod){
 }`).then(_ => console.log("rScope.gen.service.js was generated. \nRemember to include polyfills for the es6 class or adapt this file"));
 }
 
-function generateHttpService(mod){
-    writeToFile(path.join(process.cwd(), "sources/assets/javascript/rHttp.gen.service.js"), `class RadixHttp {
+function generateHttpService(mod) {
+    writeToFile(path.join(process.cwd(), "front/javascript/rHttp.gen.service.js"), `class RadixHttp {
 
     constructor(http){
         this.http = http;
@@ -163,12 +162,12 @@ function generateHttpService(mod){
 }`).then(_ => console.log("rHttp.gen.service.js was generated. \nRemember to include polyfills for the es6 class or adapt this file"));
 }
 
-function generateService(mod){
+function generateService(mod) {
 
     const mongoose = require('mongoose');
     const Schema = mongoose.Schema;
 
-    let basePath = "./sources/schemas/";
+    let basePath = "./schemas/";
     let schema;
     try {
         schema = require(path.join(process.cwd(), basePath, mod.settings.source));
@@ -186,10 +185,10 @@ function generateService(mod){
     for (let i in schema) {
         if (i.substr(0, 2) === "$$") continue;
         object.push(i.toString());
-        if(typeof schema[i].validator === 'function'){
+        if (typeof schema[i].validator === 'function') {
             validators[i] = schema[i].validator;
         }
-        if(schema[i].identifier){
+        if (schema[i].identifier) {
             identifiers.push(i.toString());
         }
     }
@@ -283,9 +282,9 @@ ${(() => object.map(e => `                ${e}: this.${e}`).join(",\n"))()}
     };
     
 ${(() => identifiers.map(e => {
-    let E = capitalizeFirstLetter(e);
-    let byE = "by" + E;
-    return `
+        let E = capitalizeFirstLetter(e);
+        let byE = "by" + E;
+        return `
     ${className}.${byE} = function (${e}) {
         return {
             get: function(){
@@ -327,9 +326,9 @@ ${(() => Object.keys(validators).map(e => `        ${e}: ${validators[e].toStrin
     
     return ${className};
 }`;
-    writeToFile(path.join(process.cwd(), "sources/assets/javascript/"+schema.$$name+".gen.service.js"), content)
+    writeToFile(path.join(process.cwd(), "front/javascript/" + schema.$$name + ".gen.service.js"), content)
         .then(data => {
-            console.log("File: " + path.join(process.cwd(), "sources/assets/javascript/"+schema.$$name+".gen.service.js"));
+            console.log("File: " + path.join(process.cwd(), "front/javascript/" + schema.$$name + ".gen.service.js"));
             console.log("Angular service was generated.");
             console.log("Remember to change baseRoute depending on how you registered the model");
         })
