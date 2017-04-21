@@ -184,10 +184,12 @@ function generateMap(mod){
     writeToFile(path.join(process.cwd(), `front/javascript/${mod.settings.name}.gen.map.json`), `{
     "name": "${mod.settings.name}",
     "services": {
-    
+        "radixHttp": {"gen": false, "inject": ["$http"]},
+        "radixScope": {"gen": false, "inject": []},
+        "testService": {"gen": true, "inject": ["radixHttp"]}
     },
     "controllers": {
-    
+        "testController": ["testService"]
     }
 }`).then(_ => console.log(`${mod.settings.name}.gen.map.json was generated.`)).then(_ => process.exit());
 }
@@ -375,15 +377,67 @@ ${(() => Object.keys(validators).map(e => `        ${e}: ${validators[e].toStrin
 function generateController(mod){
     if(!mod.settings.source){
         throw "No source specified please specify using key word 'from'";
+        process.exit();
     }
     if(!mod.settings.name){
         throw "No name specified please specify using key word 'called'";
+        process.exit();
     }
-    console.log(require(path.join(process.cwd(), "./front/javascript/",mod.settings.source).controllers));
-    console.log()
+    let a = require(path.join(__dirname, "../../front/javascript/", mod.settings.source));
+    let controller;
+    if(a.controllers && (controller = a.controllers[mod.settings.name])){
+        let vars = controller.map(dep => `this.${dep} = ${dep};`).join("        \n");
+        let content = `class ${capitalizeFirstLetter(mod.settings.name)} {
+    constructor(${controller.join(",")}){
+        ${vars}
+        console.log("${mod.settings.name} added");
+    }
+}`;
+        writeToFile(path.join(process.cwd(), `front/javascript/${mod.settings.name}.gen.controller.js`), content)
+            .then(_ => console.log(`${mod.settings.name}.gen.map.js was generated.`))
+            .then(_ => process.exit())
+            .catch(console.log);
+    } else {
+        throw "Controller not present in map";
+        process.exit();
+    }
 }
-function generateApp(mod) {
 
+
+function generateApp(mod) {
+    if(!mod.settings.source){
+        throw "No source specified please specify using key word 'from'";
+        process.exit();
+    }
+    let app = require(path.join(__dirname, "../../front/javascript/", mod.settings.source));
+    if(!app.name){
+        throw "App has no name";
+        process.exit();
+    }
+    let content = `var ${app.name} = angular.module('${app.name}', []);
+    `;
+    if(app.services){
+        for(let service in app.services){
+            content +=
+                `
+${capitalizeFirstLetter(service)}.$inject = [${app.services[service].inject.map(e => `"${e}"`).join(", ")}];
+${app.name}.service("${service}", ${capitalizeFirstLetter(service)});
+`;
+        }
+    }
+    if(app.controllers){
+        for(let controller in app.controllers){
+            content +=
+                `
+${capitalizeFirstLetter(controller)}.$inject = [${app.controllers[controller].map(e => `"${e}"`).join(", ")}];
+${app.name}.controller("${controller}", ${capitalizeFirstLetter(controller)});
+`;
+        }
+    }
+    writeToFile(path.join(process.cwd(), `front/javascript/${app.name}.gen.app.js`), content)
+        .then(_ => console.log(`${app.name}.gen.app.js was generated.`))
+        .then(_ => process.exit())
+        .catch(console.log);
 }
 exports.tasks = {};
 
