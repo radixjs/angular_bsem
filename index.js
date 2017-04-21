@@ -3,6 +3,12 @@ console.log("AngularJS BSEM Added");
 const path = require("path"),
     fs = require("fs")
 ;
+const readline = require('readline');
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 
 exports.before = (mod, ...args) => {
     mod.settings = {};
@@ -43,7 +49,16 @@ exports.lex = {
                     break;
                 case "service/scope":
                     generateScopeService(mod);
-                    break
+                    break;
+                case "map":
+                    prepareMap(mod);
+                    break;
+                case "app":
+                    generateApp(mod);
+                    break;
+                case "controller":
+                    prepareController(mod);
+                    break;
             }
         }
     },
@@ -161,6 +176,33 @@ function generateHttpService(mod) {
     }
 }`).then(_ => console.log("rHttp.gen.service.js was generated. \nRemember to include polyfills for the es6 class or adapt this file"));
 }
+
+function prepareMap(mod){
+    if(!mod.settings.name){
+        rl.question('Please give your map a name? ', (answer) => {
+            mod.settings.name = answer;
+            rl.close();
+            generateMap(mod);
+        });
+    } else {
+        generateMap(mod);
+    }
+}
+
+function generateMap(mod){
+    writeToFile(path.join(process.cwd(), `front/javascript/${mod.settings.name}.gen.map.json`), `{
+    name: "${mod.settings.name}",
+    services: {
+    
+    },
+    controllers: {
+    
+    }
+}`).then(_ => console.log(`${mod.settings.name}.gen.map.json was generated.`));
+}
+
+
+
 
 function generateService(mod) {
 
@@ -338,6 +380,27 @@ ${(() => Object.keys(validators).map(e => `        ${e}: ${validators[e].toStrin
     ;
 }
 
+
+function prepareController(mod){
+    if(!mod.settings.source){
+        throw "No source specified please specify using key word 'from'";
+    }
+    if(!mod.settings.name){
+        rl.question('Please give your controller a name? ', (answer) => {
+            mod.settings.name = answer;
+            rl.close();
+            generateController(mod);
+        });
+    } else {
+        generateController(mod);
+    }
+}
+function generateController(mod) {
+    console.log(mod.settings);
+}
+function generateApp(mod) {
+
+}
 exports.tasks = {};
 
 exports.build = [];
