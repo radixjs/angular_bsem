@@ -57,7 +57,7 @@ exports.lex = {
                     generateApp(mod);
                     break;
                 case "controller":
-                    prepareController(mod);
+                    generateController(mod);
                     break;
             }
         }
@@ -189,7 +189,7 @@ function generateMap(mod){
     "controllers": {
     
     }
-}`).then(_ => console.log(`${mod.settings.name}.gen.map.json was generated.`));
+}`).then(_ => console.log(`${mod.settings.name}.gen.map.json was generated.`)).then(_ => process.exit());
 }
 
 
