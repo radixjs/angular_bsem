@@ -51,7 +51,7 @@ exports.lex = {
                     generateScopeService(mod);
                     break;
                 case "map":
-                    prepareMap(mod);
+                    generateMap(mod);
                     break;
                 case "app":
                     generateApp(mod);
