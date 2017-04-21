@@ -379,7 +379,8 @@ function generateController(mod){
     if(!mod.settings.name){
         throw "No name specified please specify using key word 'called'";
     }
-    console.log(require("front/javascript/"+mod.settings.source).controllers);
+    console.log(require("./front/javascript/"+mod.settings.source).controllers);
+    console.log()
 }
 function generateApp(mod) {
 
