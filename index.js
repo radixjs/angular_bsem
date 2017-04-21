@@ -177,25 +177,16 @@ function generateHttpService(mod) {
 }`).then(_ => console.log("rHttp.gen.service.js was generated. \nRemember to include polyfills for the es6 class or adapt this file"));
 }
 
-function prepareMap(mod){
-    if(!mod.settings.name){
-        rl.question('Please give your map a name? ', (answer) => {
-            mod.settings.name = answer;
-            rl.close();
-            generateMap(mod);
-        });
-    } else {
-        generateMap(mod);
-    }
-}
-
 function generateMap(mod){
+    if(!mod.settings.name) {
+        throw "No name specified";
+    }
     writeToFile(path.join(process.cwd(), `front/javascript/${mod.settings.name}.gen.map.json`), `{
-    name: "${mod.settings.name}",
-    services: {
+    "name": "${mod.settings.name}",
+    "services": {
     
     },
-    controllers: {
+    "controllers": {
     
     }
 }`).then(_ => console.log(`${mod.settings.name}.gen.map.json was generated.`));
@@ -381,22 +372,14 @@ ${(() => Object.keys(validators).map(e => `        ${e}: ${validators[e].toStrin
 }
 
 
-function prepareController(mod){
+function generateController(mod){
     if(!mod.settings.source){
         throw "No source specified please specify using key word 'from'";
     }
     if(!mod.settings.name){
-        rl.question('Please give your controller a name? ', (answer) => {
-            mod.settings.name = answer;
-            rl.close();
-            generateController(mod);
-        });
-    } else {
-        generateController(mod);
+        throw "No name specified please specify using key word 'called'";
     }
-}
-function generateController(mod) {
-    console.log(mod.settings);
+    console.log(require("front/javascript/"+mod.settings.source).controllers);
 }
 function generateApp(mod) {
 
