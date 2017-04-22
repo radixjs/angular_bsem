@@ -38,8 +38,14 @@ exports.lex = {
         handler: (mod, arg) => {
             switch (arg) {
                 case "service":
+                    generateService(mod);
+                    break;
+                case "service/factory":
+                    generateFactory(mod);
+                    break;
+                case "service/crud":
                     if (mod.settings.source) {
-                        generateService(mod);
+                        generateServiceFromCrud(mod);
                     } else {
                         console.log("No source specified");
                     }
@@ -55,6 +61,9 @@ exports.lex = {
                     break;
                 case "app":
                     generateApp(mod);
+                    break;
+                case "all":
+                    generateAll(mod);
                     break;
                 case "controller":
                     generateController(mod);
@@ -188,16 +197,18 @@ function generateMap(mod){
         "radixScope": {"gen": false, "inject": []},
         "testService": {"gen": true, "inject": ["radixHttp"]}
     },
+    "factories": {
+        "testFactory": {"gen": true, "inject": ["radixHttp"]}
+    },
     "controllers": {
-        "testController": ["testService"]
+        "testController": ["testService", "testFactory"]
     }
 }`).then(_ => console.log(`${mod.settings.name}.gen.map.json was generated.`)).then(_ => process.exit());
 }
 
 
 
-
-function generateService(mod) {
+function generateServiceFromCrud(mod) {
 
     const mongoose = require('mongoose');
     const Schema = mongoose.Schema;
@@ -394,7 +405,7 @@ function generateController(mod){
     }
 }`;
         writeToFile(path.join(process.cwd(), `front/javascript/${mod.settings.name}.gen.controller.js`), content)
-            .then(_ => console.log(`${mod.settings.name}.gen.map.js was generated.`))
+            .then(_ => console.log(`${mod.settings.name}.gen.controller.js was generated.`))
             .then(_ => process.exit())
             .catch(console.log);
     } else {
@@ -403,6 +414,63 @@ function generateController(mod){
     }
 }
 
+
+
+function generateService(mod){
+    if(!mod.settings.source){
+        throw "No source specified please specify using key word 'from'";
+        process.exit();
+    }
+    if(!mod.settings.name){
+        throw "No name specified please specify using key word 'called'";
+        process.exit();
+    }
+    let a = require(path.join(__dirname, "../../front/javascript/", mod.settings.source));
+    let service;
+    if(a.services && (service = a.services[mod.settings.name])){
+        let vars = service.inject.map(dep => `this.${dep} = ${dep};`).join("        \n");
+        let content = `class ${capitalizeFirstLetter(mod.settings.name)} {
+    constructor(${service.inject.join(",")}){
+        ${vars}
+        console.log("${mod.settings.name} added");
+    }
+}`;
+        writeToFile(path.join(process.cwd(), `front/javascript/${mod.settings.name}.gen.service.js`), content)
+            .then(_ => console.log(`${mod.settings.name}.gen.service.js was generated.`))
+            .then(_ => process.exit())
+            .catch(console.log);
+    } else {
+        throw "Service not present in map";
+        process.exit();
+    }
+}
+function generateFactory(mod){
+    if(!mod.settings.source){
+        throw "No source specified please specify using key word 'from'";
+        process.exit();
+    }
+    if(!mod.settings.name){
+        throw "No name specified please specify using key word 'called'";
+        process.exit();
+    }
+    let a = require(path.join(__dirname, "../../front/javascript/", mod.settings.source));
+    let factory;
+    if(a.factories && (factory = a.factories[mod.settings.name])){
+        let vars = factory.inject.map(dep => `this.${dep} = ${dep};`).join("        \n");
+        let content = `function ${capitalizeFirstLetter(mod.settings.name)}(${factory.inject.join(",")}){
+        ${vars}
+        
+        //code
+}`;
+        writeToFile(path.join(process.cwd(), `front/javascript/${mod.settings.name}.gen.factory.js`), content)
+            .then(_ => console.log(`${mod.settings.name}.gen.factory.js was generated.`))
+            .then(_ => process.exit())
+            .catch(console.log);
+    } else {
+        throw "Factory not present in map";
+        process.exit();
+    }
+}
 
 function generateApp(mod) {
     if(!mod.settings.source){
@@ -415,6 +483,8 @@ function generateApp(mod) {
         process.exit();
     }
     let content = `var ${app.name} = angular.module('${app.name}', []);
+    
+//=> Services
     `;
     if(app.services){
         for(let service in app.services){
@@ -425,6 +495,21 @@ ${app.name}.service("${service}", ${capitalizeFirstLetter(service)});
 `;
         }
     }
+    content += `
+//=> Factories
+    `;
+    if(app.factories){
+        for(let factory in app.factories){
+            content +=
+                `
+${capitalizeFirstLetter(factory)}.$inject = [${app.factories[factory].inject.map(e => `"${e}"`).join(", ")}];
+${app.name}.factory("${factory}", ${capitalizeFirstLetter(factory)});
+`;
+        }
+    }
+    content += `
+//=> Controllers
+    `;
     if(app.controllers){
         for(let controller in app.controllers){
             content +=
@@ -439,6 +524,50 @@ ${app.name}.controller("${controller}", ${capitalizeFirstLetter(controller)});
         .then(_ => process.exit())
         .catch(console.log);
 }
+
+function generateAll(mod) {
+    if(!mod.settings.source){
+        throw "No source specified please specify using key word 'from'";
+        process.exit();
+    }
+    let app = require(path.join(__dirname, "../../front/javascript/", mod.settings.source));
+    if(!app.name){
+        throw "App has no name";
+        process.exit();
+    }
+    if(app.services){
+        for(let service in app.services){
+            if(app.services[service].gen)
+            {
+                generateService({ settings: {
+                    source: mod.settings.source,
+                    name: service
+                }})
+            }
+        }
+    }
+    if(app.factories){
+        for(let factory in app.factories){
+            generateFactory({ settings: {
+                source: mod.settings.source,
+                name: factory
+            }})
+        }
+    }
+    if(app.controllers){
+        for(let controller in app.controllers){
+            generateController({ settings: {
+                source: mod.settings.source,
+                name: controller
+            }})
+        }
+    }
+    generateApp(mod);
+}
+
+
+
+
 exports.tasks = {};
 
 exports.build = [];
