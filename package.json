@@ -1,6 +1,6 @@
 {
   "name": "angular_bsem",
-  "version": "0.3.7",
+  "version": "1.0.0",
   "description": "BSEM for Radix enabling support for AngularJS",
   "main": "index.js",
   "scripts": {
