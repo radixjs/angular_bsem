@@ -75,7 +75,7 @@ exports.lex = {
         length: 0,
         handler: (mod) => {
             console.log("Installing angularjs");
-            execute("npm install --save angular@1.6.3")
+            execute("npm install --save angular@1.6.3 angular-route")
                 .then(data => {
                     console.log("All done.");
                 })
@@ -472,6 +472,47 @@ function generateFactory(mod){
     }
 }
 
+function generateRoutes(routes){
+    let content = "";
+    for(let route in routes){
+        let routeData = routes[route];
+        if(route === "default"){
+
+            content += `      
+        .otherwise({`;
+            let comma = false;
+            for(let key in routeData){
+                if(comma) {
+                    content += ",";
+                } else {
+                    comma = true
+                }
+                content += `
+            ${key}: "${routeData[key]}"`;
+            }
+            content += `
+        })
+            `;
+        } else {
+            content += `      
+        .when("${route}",  {`;
+            let comma = false;
+            for(let key in routeData){
+                if(comma) {
+                    content += ",";
+                } else {
+                    comma = true
+                }
+                content += `
+            ${key}: "${routeData[key]}"`;
+            }
+            content += `
+        })`
+        }
+    }
+    return content;
+}
+
 function generateApp(mod) {
     if(!mod.settings.source){
         throw "No source specified please specify using key word 'from'";
@@ -482,11 +523,22 @@ function generateApp(mod) {
         throw "App has no name";
         process.exit();
     }
-    let content = `var ${app.name} = angular.module('${app.name}', []);
-    
-//=> Services
+    let content = `var ${app.name} = angular.module('${app.name}', [${app.router && app.routes ? "'ngRoute'": ""}]);
     `;
+    if(app.router && app.routes){
+        content += `
+//=> Router
+
+${app.name}.config(function($routeProvider) {
+    $routeProvider${generateRoutes(app.routes)}
+    ;
+});
+        `;
+    }
     if(app.services){
+        content += `
+//=> Services
+        `;
         for(let service in app.services){
             content +=
                 `
@@ -495,10 +547,10 @@ ${app.name}.service("${service}", ${capitalizeFirstLetter(service)});
 `;
         }
     }
-    content += `
-//=> Factories
-    `;
     if(app.factories){
+        content += `
+//=> Factories
+        `;
         for(let factory in app.factories){
             content +=
                 `
@@ -507,10 +559,10 @@ ${app.name}.factory("${factory}", ${capitalizeFirstLetter(factory)});
 `;
         }
     }
-    content += `
-//=> Controllers
-    `;
     if(app.controllers){
+        content += `
+//=> Controllers
+        `;
         for(let controller in app.controllers){
             content +=
                 `
